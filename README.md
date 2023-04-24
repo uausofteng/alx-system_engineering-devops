@@ -1,1 +1,0 @@
-Another bash project *
