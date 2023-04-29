@@ -1,41 +1,21 @@
 #!/usr/bin/env bash
-# Install and configure HAproxy on your lb-01 server.
+# configures a new HAproxy as a load balancer
 
-apt-get update -y
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:vbernat/haproxy-1.8
-apt-get update -y
-apt-get install -y haproxy=1.8.\*
+# Install HAproxy on a server
+apt-get -y update
+apt-get -y install haproxy=1.6.\*
 
-echo "ENABLED=1" >> /etc/default/haproxy
-mv /etc/haproxy/haproxy.cfg{,.original}
-touch /etc/haproxy/haproxy.cfg
+# Configure haproxy configuration file to distribute requests using a roundrobin algorithm
+echo '
+frontend sammykingx.tech
+        bind 0:80
+        default_backend web_servers
 
-printf %s "global
-    log 127.0.0.1 local0 notice
-    maxconn 2000
-    user haproxy
-    group haproxy
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    retries 3
-    option redispatch
-    timeout connect  5000
-    timeout client  10000
-    timeout server  10000
-listen load_balancer
-    bind 0.0.0.0:80
-    mode http
-    stats enable
-    stats uri /haproxy?stats
-    balance roundrobin
-    option httpclose
-    option forwardfor
-    server 130100-web-01 18.204.8.233:80 check
-    server 130100-web-02 18.234.249.123:80 check
-" >> /etc/haproxy/haproxy.cfg
+backend web_servers
+        balance roundrobin
+        server 64820-web-01 100.26.152.157:80
+        server 64820-web-02 52.86.102.6:80
+' >> /etc/haproxy/haproxy.cfg
 
-service haproxy start
+# Restart HAproxy service
+service haproxy restart
